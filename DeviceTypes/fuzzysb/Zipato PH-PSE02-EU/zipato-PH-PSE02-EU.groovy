@@ -15,6 +15,11 @@
  *	Author: fuzzysb
  *	Date: 2015-01-05
  */
+ preferences {
+ input "defaultSound", "enum", title: "Default Sound to use for the Siren?", options: ["Emergency","FireAlarm","Ambulance","PoliceCar","DoorChime"], required: false, defaultValue: "Emergency"
+}
+ 
+ 
 metadata {
  definition (name: "Zipato PH-PSE02-EU", namespace: "fuzzysb", author: "Stuart Buchanan") {
 	capability "Actuator"
@@ -28,7 +33,7 @@ metadata {
 	command "PoliceCar"
 	command "DoorChime"
     
-	fingerprint deviceId: "0x1005", inClusters: "0x20,0x70,0x71,0x98"
+	fingerprint deviceId: "0x1005", inClusters: "0x5E,0x71,0x20,0x25,0x85,0x70,0x72,0x86,0x30,0x59,0x73,0x5A,0x98,0x7A"
  }
 
 simulator {
@@ -38,8 +43,8 @@ simulator {
  tiles(scale: 2) {
 	multiAttributeTile(name:"alarm", type: "generic", width: 6, height: 4){
 		tileAttribute ("device.alarm", key: "PRIMARY_CONTROL") {
-			attributeState "off", label:'off', action:'alarm.off', icon:"st.alarm.alarm.alarm", backgroundColor:"#ffffff"
-			attributeState "both", label:'alarm!', action:'alarm.on', icon:"st.alarm.alarm.alarm", backgroundColor:"#e86d13"
+			attributeState "off", label:'off', action:'alarm.siren', icon:"st.alarm.alarm.alarm", backgroundColor:"#ffffff"
+			attributeState "both", label:'alarm!', action:'alarm.off', icon:"st.alarm.alarm.alarm", backgroundColor:"#e86d13"
 		}
 	}
 	standardTile("Emergency", "device.button", inactiveLabel: false, decoration: "flat", width: 1, height: 1) {
@@ -145,13 +150,46 @@ def zwaveEvent(physicalgraph.zwave.Command cmd) {
     createEvent(descriptionText: cmd.toString(), isStateChange: false)
 }
 
+def strobe() {
+	on()
+}
+
+def siren() {
+	on()
+}
+
+def both() {
+	on()
+}
+
 
 def on() {
-	log.debug "sending on"
-	[
-		secure(zwave.basicV1.basicSet(value: 0xFF)),
-		secure(zwave.basicV1.basicGet())
-	]
+	log.debug("Sounding Siren")
+	switch ( settings.defaultSound ) {
+		case "Emergency":
+		Emergency()
+		break
+		
+		case "FireAlarm":
+		FireAlarm()
+		break
+		
+		case "Ambulance":
+		Ambulance()
+		break
+		
+		case "PoliceCar":
+		PoliceCar()
+		break
+		
+		case "DoorChime":
+		DoorChime()
+		break
+		
+		default:
+		Emergency()
+		break
+	}
 }
 
 def off() {
